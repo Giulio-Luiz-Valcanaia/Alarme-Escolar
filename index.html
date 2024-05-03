@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alarme Escolar</title>
+	<link rel="icon" type="image/png" sizes="32x32" href="icon.png">
     <style>
         body {
             display: flex;
@@ -61,7 +62,7 @@
     <h3>Feito por Giulio Luiz Valcanaia</h3>
     <div id="clock"></div>
     <button onclick="activateAlarms(); this.style.display = 'none';">Ativar Alarme</button>
-    <img id="logo" src="logo.png" alt="Logo da Escola"> <!-- Update with the actual path to your logo image -->
+    <img id="logo" src="logo.png" alt="Logo da Escola"> 
 
     <script>
         let audioContextCreated = false;
@@ -152,6 +153,38 @@
                 checkAlarms(); // Check alarms immediately
             }
         }
+		
+		    let wakeLock = null;
+
+			async function requestWakeLock() {
+				try {
+					wakeLock = await navigator.wakeLock.request('screen');
+					console.log('Wake Lock ativado');
+					wakeLock.addEventListener('release', () => {
+						console.log('Wake Lock foi liberado');
+					});
+				} catch (err) {
+					console.error(`Falha ao ativar o Wake Lock: ${err}`);
+				}
+			}
+
+			window.onload = function() {
+				if ('wakeLock' in navigator) {
+					requestWakeLock();
+				} else {
+					console.log('Wake Lock não é suportado neste navegador.');
+				}
+			};
+
+			window.addEventListener('visibilitychange', () => {
+				if (document.visibilityState === 'hidden' && wakeLock !== null) {
+					wakeLock.release().then(() => {
+						wakeLock = null;
+						console.log('Wake Lock liberado');
+					});
+				}
+			});
+		
     </script>
 </body>
 </html>
