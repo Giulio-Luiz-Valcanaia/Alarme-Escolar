@@ -154,36 +154,38 @@
             }
         }
 		
-		    let wakeLock = null;
+	let wakeLock = null;
+	
+	async function requestWakeLock() {
+	    try {
+	        wakeLock = await navigator.wakeLock.request('screen');
+	        console.log('Wake Lock ativado');
+	        wakeLock.addEventListener('release', () => {
+	            console.log('Wake Lock foi liberado');
+	        });
+	    } catch (err) {
+	        console.error(`Falha ao ativar o Wake Lock: ${err}`);
+	    }
+	}
+	
+	async function handleVisibilityChange() {
+	    if (document.visibilityState === 'visible') {
+	        // A página se tornou visível novamente, tenta reativar o Wake Lock
+	        if (!wakeLock) {
+	            await requestWakeLock();
+	        }
+	    } else {
+	        // A página não está visível, libera o Wake Lock
+	        if (wakeLock) {
+	            await wakeLock.release();
+	            wakeLock = null;
+	            console.log('Wake Lock liberado devido à invisibilidade da página');
+	        }
+	    }
+	}
+	
+	document.addEventListener('visibilitychange', handleVisibilityChange);
 
-			async function requestWakeLock() {
-				try {
-					wakeLock = await navigator.wakeLock.request('screen');
-					console.log('Wake Lock ativado');
-					wakeLock.addEventListener('release', () => {
-						console.log('Wake Lock foi liberado');
-					});
-				} catch (err) {
-					console.error(`Falha ao ativar o Wake Lock: ${err}`);
-				}
-			}
-
-			window.onload = function() {
-				if ('wakeLock' in navigator) {
-					requestWakeLock();
-				} else {
-					console.log('Wake Lock não é suportado neste navegador.');
-				}
-			};
-
-			window.addEventListener('visibilitychange', () => {
-				if (document.visibilityState === 'hidden' && wakeLock !== null) {
-					wakeLock.release().then(() => {
-						wakeLock = null;
-						console.log('Wake Lock liberado');
-					});
-				}
-			});
 		
     </script>
 </body>
