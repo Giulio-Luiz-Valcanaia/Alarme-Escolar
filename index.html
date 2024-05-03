@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alarme Escolar</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+        #clock {
+            font-size: 8vw; /* Font size will scale with the width of the screen */
+        }
+        h1 {
+            position: absolute;
+            top: 5%;
+            text-align: center;
+            width: 100%;
+            font-size: 3vw;
+        }
+        h3 {
+            position: absolute;
+            top: 20%;
+            text-align: center;
+            width: 100%;
+            font-size: 1.5vw;
+        }
+        button {
+            font-size: 2vw; /* Adjust font size to be responsive */
+            padding: 1vw 2vw; /* Make padding proportional to the viewport width */
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            position: absolute;
+            top: 50%; /* Center the button vertically */
+            left: 50%; /* Center the button horizontally */
+            transform: translate(-50%, -50%); /* Adjust both horizontally and vertically */
+        }
+        #logo {
+            position: absolute;
+            bottom: 10%; /* Position at roughly 10% from the bottom */
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%); /* Adjust horizontally */
+            max-width: 9%; /* Limit logo size */
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Alarme - E. E. B. Frei Lucínio Korte</h1>
+    <h3>Feito por Giulio Luiz Valcanaia</h3>
+    <div id="clock"></div>
+    <button onclick="activateAlarms(); this.style.display = 'none';">Ativar Alarme</button>
+    <img id="logo" src="logo.png" alt="Logo da Escola"> <!-- Update with the actual path to your logo image -->
+
+    <script>
+        let audioContextCreated = false;
+
+        const alarms = [
+			{ hour: 7, minute: 30, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 8, minute: 15, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 9, minute: 0, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 9, minute: 15, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 10, minute: 0, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 10, minute: 45, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 11, minute: 30, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 8, minute: 8, days: [false, false, false, false, true, false, false], soundType: 3, active: true, lastTriggeredMinute: null },
+			{ hour: 8, minute: 46, days: [false, false, false, false, true, false, false], soundType: 3, active: true, lastTriggeredMinute: null },
+			{ hour: 9, minute: 24, days: [false, false, false, false, true, false, false], soundType: 3, active: true, lastTriggeredMinute: null },
+			{ hour: 9, minute: 39, days: [false, false, false, false, true, false, false], soundType: 3, active: true, lastTriggeredMinute: null },
+			{ hour: 10, minute: 16, days: [false, false, false, false, true, false, false], soundType: 3, active: true, lastTriggeredMinute: null },
+			{ hour: 10, minute: 53, days: [false, false, false, false, true, false, false], soundType: 3, active: true, lastTriggeredMinute: null },
+			{ hour: 13, minute: 0, days: [false, true, true, true, false, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 13, minute: 45, days: [false, true, true, true, false, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 14, minute: 30, days: [false, true, true, true, false, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 15, minute: 15, days: [false, true, true, true, false, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 15, minute: 30, days: [false, true, true, true, false, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 16, minute: 15, days: [false, true, true, true, false, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 17, minute: 0, days: [false, true, true, true, false, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 13, minute: 0, days: [false, false, false, false, true, false, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 13, minute: 37, days: [false, false, false, false, true, false, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 14, minute: 14, days: [false, false, false, false, true, false, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 14, minute: 51, days: [false, false, false, false, true, false, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 15, minute: 6, days: [false, false, false, false, true, false, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 15, minute: 44, days: [false, false, false, false, true, false, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 16, minute: 22, days: [false, false, false, false, true, false, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 17, minute: 0, days: [false, false, false, false, true, false, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 18, minute: 30, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 19, minute: 10, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 19, minute: 50, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 20, minute: 30, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 20, minute: 40, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 21, minute: 20, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null },
+			{ hour: 22, minute: 0, days: [false, true, true, true, true, true, false], soundType: 2, active: true, lastTriggeredMinute: null }
+        ];
+
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours().toString();
+            let minutes = now.getMinutes().toString();
+            let seconds = now.getSeconds().toString();
+
+            hours = hours.length < 2 ? '0' + hours : hours;
+            minutes = minutes.length < 2 ? '0' + minutes : minutes;
+            seconds = seconds.length < 2 ? '0' + seconds : seconds;
+
+            document.getElementById('clock').innerText = `${hours}:${minutes}:${seconds}`;
+        }
+
+        function checkAlarms() {
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+
+            alarms.forEach(alarm => {
+                if (alarm.active && alarm.days[dayOfWeek]) {
+                    if (alarm.hour === currentHour && alarm.minute === currentMinute) {
+                        if (alarm.lastTriggeredMinute !== currentMinute) {
+                            playSound(alarm.soundType);
+                            alarm.lastTriggeredMinute = currentMinute;
+                        }
+                    }
+                }
+            });
+        }
+
+        function playSound(soundType) {
+            if (!audioContextCreated) {
+                return;
+            }
+            const audio = new Audio(`sound${soundType}.mp3`);
+            audio.play().catch(e => console.error("Erro ao tentar reproduzir o som:", e));
+        }
+
+        function activateAlarms() {
+            if (!audioContextCreated) {
+                audioContextCreated = true;
+                setInterval(checkAlarms, 1000); 
+                setInterval(updateClock, 1000);
+                updateClock(); // Initialize the clock immediately
+                checkAlarms(); // Check alarms immediately
+            }
+        }
+    </script>
+</body>
+</html>
